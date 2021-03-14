@@ -37,21 +37,15 @@ def sizeof_fmt(num, suffix='B'):
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
-def check_dir_processed():
+def check_dir_processed(root):
     """ checa de diretorio ja foi processado
     """
     try:
         conn = psycopg2.connect(static_connect_str)
         cursor = conn.cursor()
         cursor.execute(
-            'INSERT INTO dup_finder.file ' 
-            ' (file_name,file_path,file_size,file_extension,uuid_hash,ts_run,  '
-            ' ts_atime, ts_mtime, ts_ctime ) VALUES '
-            ' (%(file_name)s, %(file_path)s, %(file_size)s, %(file_extension)s, '
-            ' %(uuid_hash)s, %(ts_run)s, %(ts_atime)s,%(ts_mtime)s,%(ts_ctime)s) '
-            ' returning id', 
-            data
-            )
+            'select %(root)s in (select distinct file_path from dup_finder.file)', 
+            {'root':root} ) 
         conn.commit()
         rows = cursor.fetchall()
         for row in rows:
@@ -98,39 +92,40 @@ def process_dir(my_path,ts_run):
     files_processed = 0
     bytes_processed = 0 
     total_files = 0
-    for item in os.scandir(my_path):
-        if item.is_file:
-            total_files += 1
-    for item in tqdm(os.scandir(my_path),position=1,leave=None,desc="dir ..."+my_path[-40:],total=total_files):
-        try:
-            hd = get_file_hd(item.path)
-            _, extension = os.path.splitext(item.path)
-            root, name = os.path.split(item.path)
-            assert name == item.name
-            file_data.update({
-                'file_name':item.name,
-                'file_path':root,
-                'file_size' : item.stat().st_size,
-                'file_extension' : extension, 
-                'ts_atime': ts_to_dt(item.stat().st_atime),
-                'ts_mtime': ts_to_dt(item.stat().st_mtime),
-                'ts_ctime': ts_to_dt(item.stat().st_ctime),
-                'uuid_hash' : str(hex_2_uuid(hd)), 
-                'ts_run' : ts_run,
-            })
-            record_file_data(file_data)
-            files_processed += 1
-            bytes_processed += item.stat().st_size
-            dir_data={
-                'root':root,
-                'files_count':files_processed,
-                'files_size' :bytes_processed,
-                'ts_run':ts_run
-            }
-            record_dir_data(dir_data)
-        except IsADirectoryError as e:
-            if e.strerror != 'Is a directory':
-                ic(e.strerror)
+    if not check_dir_processed(my_path):
+        for item in os.scandir(my_path):
+            # faz a contagem de arquivos para barra de progresso
+            if item.is_file: total_files += 1
+        for item in tqdm(os.scandir(my_path),position=1,leave=None,desc="dir ..."+my_path[-40:],total=total_files):
+            try:
+                hd = get_file_hd(item.path)
+                _, extension = os.path.splitext(item.path)
+                root, name = os.path.split(item.path)
+                assert name == item.name
+                file_data.update({
+                    'file_name':item.name,
+                    'file_path':root,
+                    'file_size' : item.stat().st_size,
+                    'file_extension' : extension, 
+                    'ts_atime': ts_to_dt(item.stat().st_atime),
+                    'ts_mtime': ts_to_dt(item.stat().st_mtime),
+                    'ts_ctime': ts_to_dt(item.stat().st_ctime),
+                    'uuid_hash' : str(hex_2_uuid(hd)), 
+                    'ts_run' : ts_run,
+                })
+                record_file_data(file_data)
+                files_processed += 1
+                bytes_processed += item.stat().st_size
+                dir_data={
+                    'root':root,
+                    'files_count':files_processed,
+                    'files_size' :bytes_processed,
+                    'ts_run':ts_run
+                }
+                record_dir_data(dir_data)
+            except IsADirectoryError as e:
+                if e.strerror != 'Is a directory':
+                    ic(e.strerror)
     return files_processed, bytes_processed
 
 def main():
