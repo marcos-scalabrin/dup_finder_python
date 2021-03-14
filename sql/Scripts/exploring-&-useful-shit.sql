@@ -25,7 +25,7 @@ select
 		sum(f.file_size) as total_bytes, 
 		count(1) as files_count, 
 		null::uuid uuid_hash
-		into dup_finder.directory
+--		into dup_finder.directory
 	from dup_finder.file f 
 	group by f.file_path 
 	order by sum(f.file_size) desc
@@ -92,3 +92,16 @@ select
 select * into dup_finder.file_bak from dup_finder.file;
 
 -- restaura backup do file
+
+
+
+
+-- /media/mscalabrin/My Passport/mscala1/
+update dup_finder.directory
+	set uuid_hash = null--'55e319ec-4c0b-21f5-4fc9-655af09d5ece'
+	where file_path = '/media/mscalabrin/My Passport/mscala1/Dropbox'
+;
+
+select * from directory where file_path = '/media/mscalabrin/My Passport/mscala1/Dropbox'
+	
+

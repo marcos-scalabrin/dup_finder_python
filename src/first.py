@@ -86,6 +86,30 @@ def record_file_data(data:dict):
             conn.close()
     return post_id
 
+def update_directory_hash(file_path:str,uuid_hash:str):
+    is_success = None
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(
+            ' UPDATE dup_finder.directory ' 
+            '   set uuid_hash = %(uuid_hash)s '
+            '   where file_path = %(file_path)s '
+            ,{
+                'file_path':file_path,
+                'uuid_hash':uuid_hash
+            }   )
+        conn.commit()
+        if cursor.rowcount > 0: is_success = True
+    except Exception as e:
+        print('\n\n',type(e), e,'\n\n')
+        is_success = False
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+    return False if is_success is None else is_success
+
 def process_dir(my_path,ts_run):
     file_data = {}
     dir_data = {}
@@ -125,7 +149,7 @@ def process_dir(my_path,ts_run):
                 record_dir_data(dir_data)
             except IsADirectoryError as e:
                 if e.strerror != 'Is a directory':
-                    ic(e.strerror)
+                    print(e.strerror)
     return files_processed, bytes_processed
 
 def get_directory_uuid_hash(root):
@@ -157,7 +181,6 @@ def get_directory_uuid_hash(root):
 
     return str(hex_2_uuid(dir_hash.hexdigest()))
 
-
 def main():
     try:
         args = sys.argv
@@ -175,7 +198,6 @@ def main():
 
         for root, dirs, files in tqdm(os.walk(base_path),total=total_dirs,
             position=0, leave=None, desc='loop diretórios'):
-            # ic(root)
             dirs_processed += 1
             fls, bts = process_dir(root,ts_run)
             files_processed += fls
