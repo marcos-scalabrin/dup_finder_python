@@ -16,7 +16,6 @@ PSQL_DB   = 'postgres'
 
 static_connect_str = f'postgresql://{PSQL_USER}:{PSQL_PSWD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
 
-
 def hex_2_uuid(hd):
     return UUID(hd)
 
@@ -140,13 +139,14 @@ def process_dir(my_path,ts_run):
                 record_file_data(file_data)
                 files_processed += 1
                 bytes_processed += item.stat().st_size
-                dir_data={
-                    'root':root,
-                    'files_count':files_processed,
-                    'files_size' :bytes_processed,
-                    'ts_run':ts_run
-                }
-                record_dir_data(dir_data)
+                # TODO: fazer gravação dos dados do diretorio ao processar
+                # dir_data={
+                #     'file_path':root,
+                #     'files_count':files_processed,
+                #     'files_size' :bytes_processed,
+                #     'ts_run':ts_run
+                # }
+                # record_dir_data(dir_data)
             except IsADirectoryError as e:
                 if e.strerror != 'Is a directory':
                     print(e.strerror)
