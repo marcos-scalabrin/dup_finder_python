@@ -2,3 +2,5 @@
 .ipynb_checkpoints/*
 .dbeaver/*
 .project*
+sql/.dbeaver/
+sql/.project
