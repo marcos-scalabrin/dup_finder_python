@@ -128,6 +128,36 @@ def process_dir(my_path,ts_run):
                     ic(e.strerror)
     return files_processed, bytes_processed
 
+def get_directory_uuid_hash(root):
+    """ 
+    calcula o hash do diretório, busca os hashs dos files no directory
+    atenção para ordem, pois afeta o resultado final
+    """
+    dir_hash = md5()
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(
+            ' select uuid_hash from dup_finder.file f '
+            ' where f.file_path  = %(root)s ' 
+            '	order by f.uuid_hash, f.file_name '
+            ,   {'root':root} 
+        ) 
+        conn.commit()
+        rows = cursor.fetchall()
+        for row in rows:
+            file_hash = str(row[0])
+            dir_hash.update(file_hash.encode('utf_8'))
+    except Exception as e:
+        print(type(e), e)
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+    return str(hex_2_uuid(dir_hash.hexdigest()))
+
+
 def main():
     try:
         args = sys.argv
