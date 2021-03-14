@@ -4,3 +4,4 @@
 .project*
 sql/.dbeaver/
 sql/.project
+__pycache__/
