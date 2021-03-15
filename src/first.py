@@ -20,10 +20,16 @@ def hex_2_uuid(hd):
     return UUID(hd)
 
 def get_file_hd(file,chunksize=128*10000):
-    with open(file, "rb") as f:
-        file_hash = md5()
-        while chunk := f.read(chunksize):
-            file_hash.update(chunk)
+    try:
+        with open(file, "rb") as f:
+            file_hash = md5()
+            while chunk := f.read(chunksize):
+                file_hash.update(chunk)
+    except (IsADirectoryError,FileNotFoundError):
+        raise
+    except Exception as e:
+        ic(f'ocorreu erro imprevisto {e}')
+        raise
     return file_hash.hexdigest()
 
 def ts_to_dt(ts):
@@ -105,7 +111,7 @@ def record_file_data(data:dict):
         for row in rows:
             post_id = row[0]
     except Exception as e:
-        ic('\n\n',type(e), e,'\n\n')
+        ic(e)
     finally:
         if conn:
             cursor.close()
@@ -149,6 +155,7 @@ def process_dir(my_path,ts_run):
         for item in tqdm(os.scandir(my_path),position=1,
             leave=None,desc="dir ..."+my_path[-40:],total=total_files):
             try:
+                assert item.is_file()
                 hd = get_file_hd(item.path)
                 _, extension = os.path.splitext(item.path)
                 root, name = os.path.split(item.path)
@@ -175,9 +182,14 @@ def process_dir(my_path,ts_run):
                 #     'ts_run':ts_run
                 # }
                 # record_dir_data(dir_data)
-            except IsADirectoryError as e:
-                if e.strerror != 'Is a directory':
-                    print(e.strerror)
+            except AssertionError:
+                pass
+            # except IsADirectoryError as e:
+            #     if e.strerror != 'Is a directory':
+            #         print(e.strerror)
+            # except FileNotFoundError as e:
+            #     if e.strerror != 'No such file or directory':
+            #         print(e.strerror)
     return files_processed, bytes_processed
 
 def get_directory_uuid_hash(root):

@@ -49,8 +49,8 @@ select *
 -- CUIDADO! deleta!	
 --delete from dup_finder.file f
 --	where ts_run between 
---		timestamp '2021-03-14 01:28:28' - interval '1 second' 
---		and timestamp '2021-03-14 01:28:28' + interval '1 second'
+--		timestamp '2021-03-14 19:32:32' - interval '1 second' 
+--		and timestamp '2021-03-15 01:28:28' + interval '1 second'
 	
 -- testando se path já foi encontrado
 select '/media/mscalabrin/My Passport/mscala1/Documents/Scalabrin Docs/IP' in (select distinct file_path from file)
@@ -123,5 +123,9 @@ select
 	order by (count(1)-1) * min(total_bytes) desc -- ordenando por espaço economizavel
 ;
 
+
+select file_path from directory d where d.uuid_hash = '2b7156d7-f046-a8ee-cf44-8f686144359e'
+
+select * from directory d where d.uuid_hash = '2b7156d7-f046-a8ee-cf44-8f686144359e'
 
 
