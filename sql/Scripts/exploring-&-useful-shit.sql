@@ -103,5 +103,8 @@ update dup_finder.directory
 ;
 
 select * from directory where file_path = '/media/mscalabrin/My Passport/mscala1/Dropbox'
-	
 
+
+-- query para buscar diretorios nao processados
+select file_path from dup_finder.directory d where d.uuid_hash is null
+;

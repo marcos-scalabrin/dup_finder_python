@@ -57,6 +57,33 @@ def check_dir_processed(root):
             conn.close()
     return post_id
 
+def process_dir_hashes():
+    """ processa todos os diretórios
+    que não tiveram hash ainda processado
+    """
+    n = 0
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute('select file_path from dup_finder.directory d where d.uuid_hash is null') 
+        conn.commit()
+        rows = cursor.fetchall()
+
+        for row in tqdm(rows,position=0,leave=False,
+                desc=f'hashing directories',total=cursor.rowcount):
+            file_path = row[0]
+            uuid_hash = get_directory_uuid_hash(file_path)
+            update_directory_hash(file_path,uuid_hash)
+            n += 1
+
+    except Exception as e:
+        print(type(e), e)
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+    return n
+
 def record_dir_data(data:dict):
     len(data)
 
@@ -119,7 +146,8 @@ def process_dir(my_path,ts_run):
         for item in os.scandir(my_path):
             # faz a contagem de arquivos para barra de progresso
             if item.is_file: total_files += 1
-        for item in tqdm(os.scandir(my_path),position=1,leave=None,desc="dir ..."+my_path[-40:],total=total_files):
+        for item in tqdm(os.scandir(my_path),position=1,
+            leave=None,desc="dir ..."+my_path[-40:],total=total_files):
             try:
                 hd = get_file_hd(item.path)
                 _, extension = os.path.splitext(item.path)
