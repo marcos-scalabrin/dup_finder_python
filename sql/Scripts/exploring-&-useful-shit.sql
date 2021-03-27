@@ -110,21 +110,22 @@ select file_path from dup_finder.directory d where d.uuid_hash is null
 ;
 
 -- query para mostrar diretórios duplicados
--- detecção de arquivos duplicados
 select
 		uuid_hash ,
 		min(total_bytes) as filse_size,
 		count(1) duplicates_count,
 		count(1) * min(total_bytes) as total_size,
+		sum(d.files_count) / count(1) as files_per_folder, 
 		(count(1)-1) * min(total_bytes) as saveable_space 
-	from directory d -- select * from directory
+	from dup_finder.directory d -- select * from directory
 	group by uuid_hash 
-	having count(1) > 1
+	having count(1) > 1  
 	order by (count(1)-1) * min(total_bytes) desc -- ordenando por espaço economizavel
+	  -- sum(d.files_count) / count(1) desc para ordenar por qtd de arquivos
 ;
 
 
-select file_path from directory d where d.uuid_hash = '2b7156d7-f046-a8ee-cf44-8f686144359e'
+select file_path from dup_finder.directory d where d.uuid_hash = 'a1f31e53-afee-6249-5eb1-71e100207f2e'
 
 select * from directory d where d.uuid_hash = '2b7156d7-f046-a8ee-cf44-8f686144359e'
 

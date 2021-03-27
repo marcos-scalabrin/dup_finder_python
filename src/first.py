@@ -192,6 +192,62 @@ def process_dir(my_path,ts_run):
             #         print(e.strerror)
     return files_processed, bytes_processed
 
+def get_duplicate_dirs_hash():
+    hashes = []
+
+    sql = """select
+		uuid_hash ,
+		min(total_bytes) as filse_size,
+		count(1) duplicates_count,
+		count(1) * min(total_bytes) as total_size,
+		sum(d.files_count) / count(1) as files_per_folder, 
+		(count(1)-1) * min(total_bytes) as saveable_space 
+	from dup_finder.directory d -- select * from directory
+	group by uuid_hash 
+	having count(1) > 1  
+	order by (count(1)-1) * min(total_bytes) desc
+    """
+
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(sql) 
+        conn.commit()
+        rows = cursor.fetchall()
+        for row in rows:
+            hashes.append(row[0])
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+    return hashes
+
+def get_paths_for_hash(hash):
+
+    sql = f"""
+    select file_path 
+    from dup_finder.directory d 
+    where d.uuid_hash = '{hash}'
+    """
+    paths = {}
+    n = 0 
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(sql) 
+        conn.commit()
+        rows = cursor.fetchall()
+        for row in rows:
+            paths.update({n:row[0]})
+            n += 1
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+    return paths
+
 def get_directory_uuid_hash(root):
     """ 
     calcula o hash do diretório, busca os hashs dos files no directory
