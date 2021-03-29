@@ -354,7 +354,8 @@ def insert_new_directories():
             conn.close()
     return False if is_success is None else is_success    
 
-def main(base_path,ts_run=dt.now()):
+def main(base_path,ts_run=dt.now(),reprocess_dirs=False):
+    base_path = os.path.abspath(base_path)
     t = Timer()
     t.start()
     files_processed = 0 
@@ -368,7 +369,7 @@ def main(base_path,ts_run=dt.now()):
         for root, dirs, files in tqdm(os.walk(base_path),total=total_dirs,
         position=0, leave=None, desc='loop diretórios'):
             dirs_processed += 1
-            fls, bts = process_dir(root,ts_run)
+            fls, bts = process_dir(root,ts_run,reprocess_dirs=reprocess_dirs)
             files_processed += fls
             bytes_processed += bts
     except KeyboardInterrupt:

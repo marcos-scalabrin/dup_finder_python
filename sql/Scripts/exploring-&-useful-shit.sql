@@ -51,7 +51,7 @@ select uuid_hash from file f
 select distinct ts_run::text from dup_finder.file f2 order by 1 desc ;
 select * 
 	from dup_finder.file f 
-	where ts_run =  '2021-03-29 02:15:14.451062'
+	where ts_run =  '2021-03-29 02:50:46.380434'
 ;
 
 -- CUIDADO! deleta!	
