@@ -1,5 +1,10 @@
 -- status do BD
-select ts_run, count(1) total_files_processed, sum(file_size) total_bytes_processed, max(ts_created)
+select ts_run, count(1) total_files_processed, 
+		sum(file_size) total_bytes_processed, 
+		max(ts_created),
+		count(distinct file_path) as total_directories,
+		count(distinct file_extension) as distinct_extensions,
+		ts_run::text txt_ts
 	from file f
 	group by ts_run 
 	order by ts_run desc
@@ -21,12 +26,14 @@ order by (f.ts_created - lag(ts_created , 1) over (order by f.ts_run, f.ts_creat
 -- query para comparar diretórios semelhantes
 -- para criar tabela base
 select 
-		file_path, 
+		f.file_path, 
 		sum(f.file_size) as total_bytes, 
 		count(1) as files_count, 
 		null::uuid uuid_hash
---		into dup_finder.directory
 	from dup_finder.file f 
+		left join dup_finder.directory d on 
+			f.file_path = d.file_path
+	where d.file_path is null
 	group by f.file_path 
 	order by sum(f.file_size) desc
 ;
@@ -41,17 +48,18 @@ select uuid_hash from file f
 ;
 
 -- query para buscar dados de uma rodada
--- por algum motivo comparação direta da timestamp não está funcionando
+select distinct ts_run::text from dup_finder.file f2 order by 1 desc ;
 select * 
 	from dup_finder.file f 
-	where ts_run between timestamp '2021-03-14 01:54:34' - interval '1 second' and timestamp '2021-03-14 01:54:34' + interval '1 second' 
+	where ts_run =  '2021-03-18 12:22:47.792984'
+;
 
 -- CUIDADO! deleta!	
 --delete from dup_finder.file f
---	where ts_run between 
---		timestamp '2021-03-14 19:32:32' - interval '1 second' 
---		and timestamp '2021-03-15 01:28:28' + interval '1 second'
-	
+--	where ts_run = '2021-03-28 22:37:02.370315'
+;
+
+
 -- testando se path já foi encontrado
 select '/media/mscalabrin/My Passport/mscala1/Documents/Scalabrin Docs/IP' in (select distinct file_path from file)
 
@@ -129,4 +137,4 @@ select file_path from dup_finder.directory d where d.uuid_hash = 'a1f31e53-afee-
 
 select * from directory d where d.uuid_hash = '2b7156d7-f046-a8ee-cf44-8f686144359e'
 
-
+seleciona 

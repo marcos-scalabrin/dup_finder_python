@@ -15,22 +15,17 @@ def test_base_path():
     ts_run = dt.now()
     dfr.main('.',ts_run)
 
-def exec_command(sql):
-    is_success = None
-    try:
-        conn = psycopg2.connect(static_connect_str)
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        conn.commit()
-        if cursor.rowcount > 0: is_success = True
-    except Exception as e:
-        print('\n\n',type(e), e,'\n\n')
-        is_success = False
-    finally:
-        if conn:
-            cursor.close()
-            conn.close()
-    return False if is_success is None else is_success
+def test_exec_command_00():
+    "testa comando sql invalido"
+    sql = "select now()"
+    result = dfr.exec_command(sql)
+    assert result
+
+def test_exec_command_01():
+    """testa comando sql invalido"""
+    sql = "123451242134"
+    result = dfr.exec_command(sql)
+    assert not result
 
 def test_get_rows():
     sql = 'select unnest(array[0,1,2,3,4]) as valor'

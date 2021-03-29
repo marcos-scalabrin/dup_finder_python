@@ -32,6 +32,24 @@ def get_rows(sql):
 
     return rows    
 
+
+def exec_command(sql):
+    is_success = None
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit()
+        if cursor.rowcount > 0: is_success = True
+    except Exception as e:
+        print('\n\n',type(e), e,'\n\n')
+        is_success = False
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+    return False if is_success is None else is_success
+
 def hex_2_uuid(hd):
     return UUID(hd)
 
