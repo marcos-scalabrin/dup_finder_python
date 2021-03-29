@@ -1,3 +1,7 @@
+/*
+ * para delecao de files
+ */
+
 select * 
 into dup_finder.delete_file
 from dup_finder.file limit 1

@@ -32,7 +32,6 @@ def get_rows(sql):
 
     return rows    
 
-
 def exec_command(sql):
     is_success = None
     try:
@@ -338,20 +337,7 @@ def insert_new_directories():
             where d.file_path is null
             group by f.file_path 
     """
-    is_success = None
-    try:
-        conn = psycopg2.connect(static_connect_str)
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        conn.commit()
-        if cursor.rowcount > 0: is_success = True
-    except Exception as e:
-        print('\n\n',type(e), e,'\n\n')
-        is_success = False
-    finally:
-        if conn:
-            cursor.close()
-            conn.close()
+    is_success = exec_command(sql)
     return False if is_success is None else is_success    
 
 def main(base_path,ts_run=dt.now(),reprocess_dirs=False):
@@ -379,6 +365,12 @@ def main(base_path,ts_run=dt.now(),reprocess_dirs=False):
     finally:
         print(f'processed {files_processed} files and {dirs_processed} directories '
         f'total of {sizeof_fmt(bytes_processed)} \nin {t.elapsed()}')
+
+    if insert_new_directories(): print(f'new directories inserted')
+
+    if process_dir_hashes() > 0: print(f'hashes de diretorios calculados    ')
+
+    print('finished processing')
 
 if __name__ == '__main__': 
     try:

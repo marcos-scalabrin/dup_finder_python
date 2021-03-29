@@ -3,7 +3,7 @@
  * 
  */
 
-insert into dup_finder.directory 
+--insert into dup_finder.directory 
 select 
 		f.file_path, 
 		sum(f.file_size) as total_bytes, 
@@ -18,3 +18,7 @@ select
 
 
 delete from dup_finder.directory where uuid_hash is null;
+
+
+
+select unnest(array[0,1,2])
