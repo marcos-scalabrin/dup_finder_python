@@ -16,10 +16,15 @@ PSQL_DB   = 'postgres'
 
 static_connect_str = f'postgresql://{PSQL_USER}:{PSQL_PSWD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
 
+
+
 def hex_2_uuid(hd):
     return UUID(hd)
 
 def get_file_hd(file,chunksize=128*10000):
+    """calcula a hex digest do arquivo, le toda a info 
+    para calcular o md5
+    """
     try:
         with open(file, "rb") as f:
             file_hash = md5()
@@ -43,7 +48,8 @@ def sizeof_fmt(num, suffix='B'):
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
 def check_dir_processed(root):
-    """ checa de diretorio ja foi processado
+    """ checa de diretorio ja foi processado, importante para quando 
+    process é interrompido, não reprocessar hashes de arquivos
     """
     try:
         conn = psycopg2.connect(static_connect_str)
@@ -76,7 +82,7 @@ def process_dir_hashes():
         rows = cursor.fetchall()
 
         for row in tqdm(rows,position=0,leave=False,
-                desc=f'hashing directories',total=cursor.rowcount):
+        desc=f'hashing directories',total=cursor.rowcount):
             file_path = row[0]
             uuid_hash = get_directory_uuid_hash(file_path)
             update_directory_hash(file_path,uuid_hash)
@@ -91,6 +97,7 @@ def process_dir_hashes():
     return n
 
 def record_dir_data(data:dict):
+    # TODO: construir, colocar dentro de process_dir
     len(data)
 
 def record_file_data(data:dict):
@@ -153,7 +160,7 @@ def process_dir(my_path,ts_run):
             # faz a contagem de arquivos para barra de progresso
             if item.is_file: total_files += 1
         for item in tqdm(os.scandir(my_path),position=1,
-            leave=None,desc="dir ..."+my_path[-40:],total=total_files):
+        leave=None,desc="dir ..."+my_path[-40:],total=total_files):
             try:
                 assert item.is_file()
                 hd = get_file_hd(item.path)
@@ -277,31 +284,72 @@ def get_directory_uuid_hash(root):
 
     return str(hex_2_uuid(dir_hash.hexdigest()))
 
+def insert_new_directories():
+    """ funcao executa sql que inclui novos diretorios
+    que ainda não estejam no identificados
+    """
+    sql = """
+        insert into dup_finder.directory 
+        select 
+                f.file_path, 
+                sum(f.file_size) as total_bytes, 
+                count(1) as files_count, 
+                null::uuid uuid_hash
+            from dup_finder.file f 
+                left join dup_finder.directory d on 
+                    f.file_path = d.file_path
+            where d.file_path is null
+            group by f.file_path 
+    """
+    is_success = None
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit()
+        if cursor.rowcount > 0: is_success = True
+    except Exception as e:
+        print('\n\n',type(e), e,'\n\n')
+        is_success = False
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+    return False if is_success is None else is_success    
+
 def main():
     try:
         args = sys.argv
         base_path = args[1]
+        ic(base_path)
+        base_path = os.path.abspath(base_path)
+        assert os.path.isdir(base_path)
+        ic(base_path)
         ts_run = dt.now()
         t = Timer()
         t.start()
         files_processed = 0 
         bytes_processed = 0
         dirs_processed = 0
+        try:
+            total_dirs = 0
+            for _, _, _ in os.walk(base_path):
+                total_dirs +=1
 
-        total_dirs = 0
-        for _, _, _ in os.walk(base_path):
-            total_dirs +=1
-
-        for root, dirs, files in tqdm(os.walk(base_path),total=total_dirs,
+            for root, dirs, files in tqdm(os.walk(base_path),total=total_dirs,
             position=0, leave=None, desc='loop diretórios'):
-            dirs_processed += 1
-            fls, bts = process_dir(root,ts_run)
-            files_processed += fls
-            bytes_processed += bts
-    except KeyboardInterrupt:
-        print('\n\nPROCESS INTERRUPTED BY USER\n\n')        
-    finally:
-        print(f'processed {files_processed} files and {dirs_processed} directories '
-        f'total of {sizeof_fmt(bytes_processed)} \nin {t.elapsed()}')
+                dirs_processed += 1
+                fls, bts = process_dir(root,ts_run)
+                files_processed += fls
+                bytes_processed += bts
+        except KeyboardInterrupt:
+            print('\n\nPROCESS INTERRUPTED BY USER\n\n')
+        except Exception as e:
+            raise e    
+        finally:
+            print(f'processed {files_processed} files and {dirs_processed} directories '
+            f'total of {sizeof_fmt(bytes_processed)} \nin {t.elapsed()}')
+    except AssertionError:
+        print(f'caminho {args[1]} não encontrado\n')
 
 if __name__ == '__main__': main()
