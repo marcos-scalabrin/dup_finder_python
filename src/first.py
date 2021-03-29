@@ -317,39 +317,41 @@ def insert_new_directories():
             conn.close()
     return False if is_success is None else is_success    
 
-def main():
+def main(base_path):
+    ts_run = dt.now()
+    t = Timer()
+    t.start()
+    files_processed = 0 
+    bytes_processed = 0
+    dirs_processed = 0
+    try:
+        total_dirs = 0
+        for _, _, _ in os.walk(base_path):
+            total_dirs +=1
+
+        for root, dirs, files in tqdm(os.walk(base_path),total=total_dirs,
+        position=0, leave=None, desc='loop diretórios'):
+            dirs_processed += 1
+            fls, bts = process_dir(root,ts_run)
+            files_processed += fls
+            bytes_processed += bts
+    except KeyboardInterrupt:
+        print('\n\nPROCESS INTERRUPTED BY USER\n\n')
+    except Exception as e:
+        raise e    
+    finally:
+        print(f'processed {files_processed} files and {dirs_processed} directories '
+        f'total of {sizeof_fmt(bytes_processed)} \nin {t.elapsed()}')
+
+if __name__ == '__main__': 
     try:
         args = sys.argv
         base_path = args[1]
         ic(base_path)
         base_path = os.path.abspath(base_path)
         assert os.path.isdir(base_path)
-        ic(base_path)
-        ts_run = dt.now()
-        t = Timer()
-        t.start()
-        files_processed = 0 
-        bytes_processed = 0
-        dirs_processed = 0
-        try:
-            total_dirs = 0
-            for _, _, _ in os.walk(base_path):
-                total_dirs +=1
-
-            for root, dirs, files in tqdm(os.walk(base_path),total=total_dirs,
-            position=0, leave=None, desc='loop diretórios'):
-                dirs_processed += 1
-                fls, bts = process_dir(root,ts_run)
-                files_processed += fls
-                bytes_processed += bts
-        except KeyboardInterrupt:
-            print('\n\nPROCESS INTERRUPTED BY USER\n\n')
-        except Exception as e:
-            raise e    
-        finally:
-            print(f'processed {files_processed} files and {dirs_processed} directories '
-            f'total of {sizeof_fmt(bytes_processed)} \nin {t.elapsed()}')
+        ic(base_path)    
+        main(base_path)
     except AssertionError:
         print(f'caminho {args[1]} não encontrado\n')
-
-if __name__ == '__main__': main()
+    
