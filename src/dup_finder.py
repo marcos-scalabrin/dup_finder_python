@@ -16,7 +16,21 @@ PSQL_DB   = 'postgres'
 
 static_connect_str = f'postgresql://{PSQL_USER}:{PSQL_PSWD}@{PSQL_HOST}:{PSQL_PORT}/{PSQL_DB}'
 
+def get_rows(sql):
+    """wrapper para buscar registros, espera-se que a consulta
+    seja do tipo SELECT retornando um ou mais registros """
+    try:
+        conn = psycopg2.connect(static_connect_str)
+        cursor = conn.cursor()
+        cursor.execute(sql) 
+        conn.commit()
+        rows = cursor.fetchall()
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
 
+    return rows    
 
 def hex_2_uuid(hd):
     return UUID(hd)
@@ -317,8 +331,7 @@ def insert_new_directories():
             conn.close()
     return False if is_success is None else is_success    
 
-def main(base_path):
-    ts_run = dt.now()
+def main(base_path,ts_run=dt.now()):
     t = Timer()
     t.start()
     files_processed = 0 
