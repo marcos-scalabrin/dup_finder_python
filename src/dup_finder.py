@@ -181,14 +181,19 @@ def update_directory_hash(file_path:str,uuid_hash:str):
             conn.close()
     return False if is_success is None else is_success
 
-def process_dir(my_path,ts_run):
+def process_dir(my_path,ts_run,reprocess_dirs=False):
     file_data = {}
     dir_data = {}
     files_processed = 0
     bytes_processed = 0 
     total_files = 0
-    if not check_dir_processed(my_path):
+    if reprocess_dirs: dir_is_processed = False
+    else: dir_is_processed = check_dir_processed(my_path)
+    ic(dir_is_processed)
+    if not dir_is_processed:
+        ic()
         for item in os.scandir(my_path):
+            ic()
             # faz a contagem de arquivos para barra de progresso
             if item.is_file: total_files += 1
         for item in tqdm(os.scandir(my_path),position=1,

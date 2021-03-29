@@ -13,7 +13,16 @@ from utils import *
 def test_base_path():
     curdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
     ts_run = dt.now()
+    # t = ts_run
+    # sufix = f'{t.year}{t.month:>02}{t.day:>02}{t.hour:>02}{t.minute:>02}{t.second:>02}{t.microsecond}'
+    # base_path = f'{curdir}/test_base_path_{sufix}'
+    # file_name = base_path + '/testes.tst'
+    # os.makedirs(base_path)
+    # with open(,'w') as file:
+    #     file.write('oi')
     dfr.main('.',ts_run)
+
+
 
 def test_exec_command_00():
     "testa comando sql invalido"
