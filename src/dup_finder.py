@@ -374,13 +374,24 @@ def main(base_path,ts_run=dt.now(),reprocess_dirs=False):
 
 if __name__ == '__main__': 
     try:
+        ### processamento de argumentos
+        ### 1 > caminho
+        ### 2 > debug
         args = sys.argv
         base_path = args[1]
-        ic(base_path)
+        debug = False
+        reprocess_dirs = False
+        for arg in args:
+            # try:
+            if arg[0:6] == '-debug': debug = True
+            elif arg[0:15] == '-reprocess_dirs': reprocess_dirs = True
+        ic.enable() if debug else ic.disable()
+        ic(args)
         base_path = os.path.abspath(base_path)
         assert os.path.isdir(base_path)
-        ic(base_path)    
-        main(base_path)
+        ic(base_path, debug, reprocess_dirs)    
+        print(f'iniciando processamento de {base_path}')
+        main(base_path,reprocess_dirs=reprocess_dirs)
     except AssertionError:
         print(f'caminho {args[1]} não encontrado\n')
     

@@ -13,3 +13,11 @@ delete from dup_finder.delete_file
 select distinct extract(MICROSECONDS from ts_run), ts_run from dup_finder.file
 
 select * from dup_finder.file f where ts_run = '2021-03-28 22:37:02.370315'
+
+;
+
+
+select * from dup_finder.directory d where d.file_path like '/home/mscalabrin/git%'
+
+
+

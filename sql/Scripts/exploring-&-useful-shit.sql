@@ -55,8 +55,8 @@ select *
 ;
 
 -- CUIDADO! deleta!	
---delete from dup_finder.file f
---	where ts_run >= '2021-03-29 02:15:14.451062'
+delete from dup_finder.file f
+	where ts_run >= '2021-03-29 12:56:25.150856'
 ;
 
 
