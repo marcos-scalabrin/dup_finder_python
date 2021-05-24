@@ -376,7 +376,11 @@ if __name__ == '__main__':
     try:
         ### processamento de argumentos
         ### 1 > caminho
-        ### 2 > debug
+        ### outros 
+        # -debug -> habilita modo debug
+        # -reprocess_dirs -> não verifica se diretorio já foi processado.
+        # exemplo no linux:
+        # pipenv run python dup_finder.py /home -debug -reprocess_dirs
         args = sys.argv
         base_path = args[1]
         debug = False

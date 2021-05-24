@@ -3,18 +3,23 @@
  * 
  */
 
---insert into dup_finder.directory 
+insert into dup_finder.directory (file_path, ts_run, total_bytes, files_count, uuid_hash)
 select 
 		f.file_path, 
+		f.ts_run ,
 		sum(f.file_size) as total_bytes, 
 		count(1) as files_count, 
 		null::uuid uuid_hash
 	from dup_finder.file f 
-		left join dup_finder.directory d on 
-			f.file_path = d.file_path
-	where d.file_path is null
-	group by f.file_path 
+--		left join dup_finder.directory d on 
+--			f.file_path = d.file_path
+--	where d.file_path is null
+	group by f.file_path, f.ts_run 
 ;
+
+truncate dup_finder.directory ;
+
+ALTER TABLE dup_finder.directory ADD ts_run timestamp NOT NULL;
 
 
 delete from dup_finder.directory where uuid_hash is null;
